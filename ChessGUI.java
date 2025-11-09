@@ -11,6 +11,7 @@ public class ChessGUI extends JFrame {
     private final JLabel statusLabel;
     private NetworkManager networkManager;
     private final GameSettings settings;
+    private boolean isWhitePlayer = true; // In online mode: host=white, joiner=black
     
     // Timer stuff for timed matches
     private final JLabel whiteTimerLabel;
@@ -34,6 +35,11 @@ public class ChessGUI extends JFrame {
         this.settings = settings;
         board = new ChessBoard();
         squares = new JButton[8][8];
+        
+        // In online mode: host is always white, joiner is always black
+        if (settings.isOnlineGame()) {
+            isWhitePlayer = settings.isHost();
+        }
         
         setTitle("Chess Game - " + settings.getWhitePlayerName() + " vs " + settings.getBlackPlayerName());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -179,6 +185,18 @@ public class ChessGUI extends JFrame {
             if (piece != ' ') {
                 // Make sure they're moving their own piece
                 boolean isWhite = Character.isUpperCase(piece);
+                
+                // In online mode, only allow moving your assigned color
+                if (settings.isOnlineGame()) {
+                    if (isWhitePlayer && !isWhite) {
+                        return; // Host can only move white pieces
+                    }
+                    if (!isWhitePlayer && isWhite) {
+                        return; // Joiner can only move black pieces
+                    }
+                }
+                
+                // Make sure it's the right turn
                 if ((board.isWhiteTurn() && isWhite) || (!board.isWhiteTurn() && !isWhite)) {
                     selectedRow = row;
                     selectedCol = col;

@@ -59,6 +59,7 @@ public class NetworkManager extends Thread {
         String myIP = getLocalIP();
         System.out.println("Server started! Your IP: " + myIP);
         System.out.println("Waiting for opponent to join...");
+        System.out.println("You will play as WHITE (host always plays white)");
         
         // Show dialog with IP so user knows what to share
         javax.swing.SwingUtilities.invokeLater(() -> {
@@ -66,6 +67,8 @@ public class NetworkManager extends Thread {
                 "Waiting for opponent...\n\n" +
                 "Share this IP with your opponent:\n" +
                 myIP + "\n\n" +
+                "You will play as WHITE ♔\n" +
+                "Your opponent will play as BLACK ♚\n\n" +
                 "Example: If IP is 192.168.43.x, they enter that when joining",
                 "Hosting Game - Port " + PORT,
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
@@ -87,13 +90,17 @@ public class NetworkManager extends Thread {
     
     private void connectToServer() throws IOException {
         System.out.println("Connecting to " + host + ":" + PORT);
+        System.out.println("You will play as BLACK (joiner always plays black)");
         socket = new Socket();
         socket.connect(new InetSocketAddress(host, PORT), 10000); // 10 sec timeout
         System.out.println("Connected to host!");
         
         javax.swing.SwingUtilities.invokeLater(() -> {
             javax.swing.JOptionPane.showMessageDialog(null,
-                "Connected successfully!",
+                "Connected successfully!\n\n" +
+                "You will play as BLACK ♚\n" +
+                "Host plays as WHITE ♔\n\n" +
+                "White moves first!",
                 "Connected!",
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
         });
