@@ -12,9 +12,9 @@ public class ChessGame {
             // Use default look and feel if setting fails
         }
         
-        // Create and show the GUI on the Event Dispatch Thread
+        // Create and show the Main Menu on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
-            new ChessGUI();
+            new MainMenu();
         });
     }
 }

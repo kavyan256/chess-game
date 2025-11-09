@@ -189,6 +189,38 @@ public class ChessBoard {
     }
     
     /**
+     * Check if a move would be valid (without executing it)
+     */
+    public boolean isValidMoveCheck(int fromRow, int fromCol, int toRow, int toCol) {
+        char piece = board[fromRow][fromCol];
+        
+        // Check if there's a piece to move
+        if (piece == ' ') {
+            return false;
+        }
+        
+        // Check if it's the correct player's turn
+        if (whiteTurn && !isWhitePiece(piece)) {
+            return false;
+        }
+        if (!whiteTurn && !isBlackPiece(piece)) {
+            return false;
+        }
+        
+        // Check if destination has own piece
+        char destPiece = board[toRow][toCol];
+        if (whiteTurn && isWhitePiece(destPiece)) {
+            return false;
+        }
+        if (!whiteTurn && isBlackPiece(destPiece)) {
+            return false;
+        }
+        
+        // Validate movement based on piece type
+        return isValidMove(piece, fromRow, fromCol, toRow, toCol);
+    }
+    
+    /**
      * Reset the board to starting position
      */
     public void reset() {

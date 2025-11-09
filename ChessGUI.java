@@ -1,40 +1,89 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 
 /**
- * ChessGUI - Handles the graphical user interface for the chess game
+ * ChessGUI - Handles the graphical user interface for the chess game with improved UI
  */
 public class ChessGUI extends JFrame {
-    private ChessBoard board;
-    private JButton[][] squares;
+    private final ChessBoard board;
+    private final JButton[][] squares;
     private JButton selectedSquare;
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private JLabel statusLabel;
+    private final JLabel statusLabel;
     private NetworkManager networkManager;
+    private final GameSettings settings;
+    
+    // Timer components
+    private final JLabel whiteTimerLabel;
+    private final JLabel blackTimerLabel;
+    private final JLabel whiteNameLabel;
+    private final JLabel blackNameLabel;
+    private Timer whiteTimer;
+    private Timer blackTimer;
+    private int whiteTimeRemaining;
+    private int blackTimeRemaining;
+    private boolean gameOver = false;
     
     private static final Color LIGHT_SQUARE = new Color(240, 217, 181);
     private static final Color DARK_SQUARE = new Color(181, 136, 99);
-    private static final Color SELECTED_COLOR = new Color(186, 202, 68);
+    private static final Color SELECTED_COLOR = new Color(246, 246, 130); // Bright yellow
+    private static final Color POSSIBLE_MOVE_COLOR = new Color(186, 202, 68); // Yellow-green  
+    private static final Color CAPTURE_MOVE_COLOR = new Color(255, 100, 100); // Light red for captures
     
-    public ChessGUI() {
+    public ChessGUI(GameSettings settings, String hostIp) {
+        this.settings = settings;
         board = new ChessBoard();
         squares = new JButton[8][8];
         
-        setTitle("Simple Chess Game");
+        setTitle("Chess Game - " + settings.getWhitePlayerName() + " vs " + settings.getBlackPlayerName());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(new Color(50, 50, 50));
         
-        // Create chess board panel
-        JPanel boardPanel = new JPanel(new GridLayout(8, 8));
+        // Initialize timers if enabled
+        if (settings.isTimerEnabled()) {
+            whiteTimeRemaining = settings.getTimePerPlayerSeconds();
+            blackTimeRemaining = settings.getTimePerPlayerSeconds();
+        } else {
+            whiteTimeRemaining = 0;
+            blackTimeRemaining = 0;
+        }
+        
+        // Top panel - Black player info
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(50, 50, 50));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        blackNameLabel = new JLabel("♚ " + settings.getBlackPlayerName());
+        blackNameLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        blackNameLabel.setForeground(Color.WHITE);
+        
+        blackTimerLabel = new JLabel(formatTime(blackTimeRemaining));
+        blackTimerLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        blackTimerLabel.setForeground(new Color(200, 200, 200));
+        blackTimerLabel.setVisible(settings.isTimerEnabled());
+        
+        topPanel.add(blackNameLabel, BorderLayout.WEST);
+        topPanel.add(blackTimerLabel, BorderLayout.EAST);
+        
+        // Center panel - Chess board
+        JPanel boardPanel = new JPanel(new GridLayout(8, 8, 0, 0)); // No gaps between squares
         boardPanel.setPreferredSize(new Dimension(640, 640));
+        boardPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(101, 67, 33), 8), // Dark brown outer border
+            BorderFactory.createLineBorder(new Color(139, 90, 43), 3)  // Medium brown inner border
+        ));
         
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 JButton square = new JButton();
                 square.setFont(new Font("Arial Unicode MS", Font.PLAIN, 48));
                 square.setFocusPainted(false);
+                square.setOpaque(true);
+                square.setBorderPainted(false); // Remove button border for cleaner look
+                square.setContentAreaFilled(true);
+                square.setMargin(new Insets(0, 0, 0, 0));
                 
                 // Alternate colors
                 if ((row + col) % 2 == 0) {
@@ -52,36 +101,79 @@ public class ChessGUI extends JFrame {
             }
         }
         
-        // Create control panel
-        JPanel controlPanel = new JPanel();
+        // Bottom panel - White player info
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(new Color(50, 50, 50));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JButton hostButton = new JButton("Host Game");
-        hostButton.addActionListener(e -> hostGame());
+        whiteNameLabel = new JLabel("♔ " + settings.getWhitePlayerName());
+        whiteNameLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        whiteNameLabel.setForeground(Color.WHITE);
         
-        JButton joinButton = new JButton("Join Game");
-        joinButton.addActionListener(e -> joinGame());
+        whiteTimerLabel = new JLabel(formatTime(whiteTimeRemaining));
+        whiteTimerLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        whiteTimerLabel.setForeground(new Color(200, 200, 200));
+        whiteTimerLabel.setVisible(settings.isTimerEnabled());
         
-        JButton resetButton = new JButton("Reset Board");
-        resetButton.addActionListener(e -> resetGame());
+        bottomPanel.add(whiteNameLabel, BorderLayout.WEST);
+        bottomPanel.add(whiteTimerLabel, BorderLayout.EAST);
+        
+        // Control panel
+        JPanel controlPanel = new JPanel(new FlowLayout());
+        controlPanel.setBackground(new Color(50, 50, 50));
         
         statusLabel = new JLabel("White's Turn");
         statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        statusLabel.setForeground(Color.WHITE);
         
-        controlPanel.add(hostButton);
-        controlPanel.add(joinButton);
-        controlPanel.add(resetButton);
+        JButton resetButton = new JButton("New Game");
+        resetButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        resetButton.addActionListener(e -> newGame());
+        
+        JButton menuButton = new JButton("Main Menu");
+        menuButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        menuButton.addActionListener(e -> backToMenu());
+        
         controlPanel.add(statusLabel);
+        controlPanel.add(Box.createHorizontalStrut(20));
+        controlPanel.add(resetButton);
+        controlPanel.add(menuButton);
         
+        // Combine bottom section
+        JPanel bottomSection = new JPanel(new BorderLayout());
+        bottomSection.setBackground(new Color(50, 50, 50));
+        bottomSection.add(bottomPanel, BorderLayout.NORTH);
+        bottomSection.add(controlPanel, BorderLayout.SOUTH);
+        
+        add(topPanel, BorderLayout.NORTH);
         add(boardPanel, BorderLayout.CENTER);
-        add(controlPanel, BorderLayout.SOUTH);
+        add(bottomSection, BorderLayout.SOUTH);
         
         updateBoard();
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
+        
+        // Setup network if online game
+        if (settings.isOnlineGame()) {
+            if (settings.isHost()) {
+                hostGame();
+            } else if (hostIp != null) {
+                joinGame(hostIp);
+            }
+        }
+        
+        // Start timer if enabled
+        if (settings.isTimerEnabled()) {
+            startWhiteTimer();
+        }
+        
+        updatePlayerHighlight();
     }
     
     private void handleSquareClick(int row, int col) {
+        if (gameOver) return;
+        
         if (selectedRow == -1) {
             // First click - select a piece
             char piece = board.getPiece(row, col);
@@ -112,6 +204,8 @@ public class ChessGUI extends JFrame {
                     }
                     updateBoard();
                     updateStatus();
+                    switchTimer();
+                    updatePlayerHighlight();
                 }
                 clearSelection();
             }
@@ -120,15 +214,43 @@ public class ChessGUI extends JFrame {
     
     private void highlightSelected(int row, int col) {
         selectedSquare.setBackground(SELECTED_COLOR);
+        
+        // Highlight all possible moves for the selected piece
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (board.isValidMoveCheck(row, col, r, c)) {
+                    // Check if it's a capture
+                    boolean isCapture = board.getPiece(r, c) != ' ';
+                    Color originalColor = (r + c) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE;
+                    Color highlightColor = isCapture ? CAPTURE_MOVE_COLOR : POSSIBLE_MOVE_COLOR;
+                    squares[r][c].setBackground(blendColors(originalColor, highlightColor));
+                }
+            }
+        }
+    }
+    
+    private Color blendColors(Color base, Color overlay) {
+        // Use strong blending - 50% base, 50% overlay for better visibility
+        int r = (int)(base.getRed() * 0.5 + overlay.getRed() * 0.5);
+        int g = (int)(base.getGreen() * 0.5 + overlay.getGreen() * 0.5);
+        int b = (int)(base.getBlue() * 0.5 + overlay.getBlue() * 0.5);
+        return new Color(r, g, b);
     }
     
     private void clearSelection() {
         if (selectedSquare != null && selectedRow != -1) {
-            // Restore original color
-            if ((selectedRow + selectedCol) % 2 == 0) {
-                selectedSquare.setBackground(LIGHT_SQUARE);
-            } else {
-                selectedSquare.setBackground(DARK_SQUARE);
+            // Restore all squares to their original colors
+            for (int row = 0; row < 8; row++) {
+                for (int col = 0; col < 8; col++) {
+                    Color originalColor;
+                    if ((row + col) % 2 == 0) {
+                        originalColor = LIGHT_SQUARE;
+                    } else {
+                        originalColor = DARK_SQUARE;
+                    }
+                    squares[row][col].setBackground(originalColor);
+                    squares[row][col].setOpaque(true); // Ensure square is opaque
+                }
             }
         }
         selectedRow = -1;
@@ -171,6 +293,16 @@ public class ChessGUI extends JFrame {
         }
     }
     
+    private void updatePlayerHighlight() {
+        if (board.isWhiteTurn()) {
+            whiteNameLabel.setForeground(Color.YELLOW);
+            blackNameLabel.setForeground(Color.WHITE);
+        } else {
+            whiteNameLabel.setForeground(Color.WHITE);
+            blackNameLabel.setForeground(Color.YELLOW);
+        }
+    }
+    
     private void hostGame() {
         networkManager = new NetworkManager(true, this);
         networkManager.start();
@@ -179,34 +311,106 @@ public class ChessGUI extends JFrame {
             "Host Game", JOptionPane.INFORMATION_MESSAGE);
     }
     
-    private void joinGame() {
-        String host = JOptionPane.showInputDialog(this, 
-            "Enter host IP address:", 
-            "Join Game", 
-            JOptionPane.QUESTION_MESSAGE);
-        
-        if (host != null && !host.trim().isEmpty()) {
-            networkManager = new NetworkManager(false, this);
-            networkManager.setHost(host.trim());
-            networkManager.start();
-        }
+    private void joinGame(String host) {
+        networkManager = new NetworkManager(false, this);
+        networkManager.setHost(host);
+        networkManager.start();
     }
     
-    private void resetGame() {
+    private void newGame() {
+        stopTimers();
         board.reset();
         updateBoard();
         updateStatus();
         clearSelection();
+        gameOver = false;
         
+        if (settings.isTimerEnabled()) {
+            whiteTimeRemaining = settings.getTimePerPlayerSeconds();
+            blackTimeRemaining = settings.getTimePerPlayerSeconds();
+            whiteTimerLabel.setText(formatTime(whiteTimeRemaining));
+            blackTimerLabel.setText(formatTime(blackTimeRemaining));
+            startWhiteTimer();
+        }
+        
+        updatePlayerHighlight();
+    }
+    
+    private void backToMenu() {
+        stopTimers();
         if (networkManager != null) {
             networkManager.close();
-            networkManager = null;
+        }
+        dispose();
+        SwingUtilities.invokeLater(() -> new MainMenu());
+    }
+    
+    // Timer methods
+    private void startWhiteTimer() {
+        stopTimers();
+        whiteTimer = new Timer(1000, e -> {
+            whiteTimeRemaining--;
+            whiteTimerLabel.setText(formatTime(whiteTimeRemaining));
+            if (whiteTimeRemaining <= 10) {
+                whiteTimerLabel.setForeground(Color.RED);
+            }
+            if (whiteTimeRemaining <= 0) {
+                endGame(settings.getBlackPlayerName() + " wins - Time out!");
+            }
+        });
+        whiteTimer.start();
+    }
+    
+    private void startBlackTimer() {
+        stopTimers();
+        blackTimer = new Timer(1000, e -> {
+            blackTimeRemaining--;
+            blackTimerLabel.setText(formatTime(blackTimeRemaining));
+            if (blackTimeRemaining <= 10) {
+                blackTimerLabel.setForeground(Color.RED);
+            }
+            if (blackTimeRemaining <= 0) {
+                endGame(settings.getWhitePlayerName() + " wins - Time out!");
+            }
+        });
+        blackTimer.start();
+    }
+    
+    private void stopTimers() {
+        if (whiteTimer != null) {
+            whiteTimer.stop();
+        }
+        if (blackTimer != null) {
+            blackTimer.stop();
         }
     }
     
-    /**
-     * Apply a move received from the network
-     */
+    private void switchTimer() {
+        if (!settings.isTimerEnabled()) return;
+        
+        if (board.isWhiteTurn()) {
+            startWhiteTimer();
+            blackTimerLabel.setForeground(new Color(200, 200, 200));
+        } else {
+            startBlackTimer();
+            whiteTimerLabel.setForeground(new Color(200, 200, 200));
+        }
+    }
+    
+    private void endGame(String message) {
+        gameOver = true;
+        stopTimers();
+        statusLabel.setText(message);
+        JOptionPane.showMessageDialog(this, message, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private String formatTime(int seconds) {
+        if (seconds < 0) seconds = 0;
+        int minutes = seconds / 60;
+        int secs = seconds % 60;
+        return String.format("%02d:%02d", minutes, secs);
+    }
+    
     public void applyNetworkMove(String move) {
         if (move.length() == 4) {
             int fromRow = notationToRow(move.charAt(1));
@@ -219,6 +423,8 @@ public class ChessGUI extends JFrame {
             SwingUtilities.invokeLater(() -> {
                 updateBoard();
                 updateStatus();
+                switchTimer();
+                updatePlayerHighlight();
             });
         }
     }
