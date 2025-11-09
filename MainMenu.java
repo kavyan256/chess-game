@@ -78,15 +78,15 @@ public class MainMenu extends JFrame {
         contentPanel.add(createSectionLabel("Select Game Mode"));
         contentPanel.add(Box.createVerticalStrut(15));
         
-        JButton localGameButton = createStyledButton("Local Game", new Color(76, 175, 80));
-        localGameButton.addActionListener(e -> {
-            updateSettings(whiteNameField, blackNameField, timerCheckbox, timeSpinner);
-            settings.setOnlineGame(false);
-            startGame();
-        });
-        contentPanel.add(localGameButton);
+        // JButton localGameButton = createStyledButton("Local Game", new Color(76, 175, 80));
+        // localGameButton.addActionListener(e -> {
+        //     updateSettings(whiteNameField, blackNameField, timerCheckbox, timeSpinner);
+        //     settings.setOnlineGame(false);
+        //     startGame();
+        // });
+        // contentPanel.add(localGameButton);
         
-        contentPanel.add(Box.createVerticalStrut(10));
+        // contentPanel.add(Box.createVerticalStrut(10));
         
         JButton hostGameButton = createStyledButton("Host Online Game", new Color(33, 150, 243));
         hostGameButton.addActionListener(e -> {
