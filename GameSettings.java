@@ -1,6 +1,5 @@
-/**
- * GameSettings - Stores game configuration including player names, timer settings, and game mode
- */
+// Simple class to store all the game settings
+// Like player names, timer options, etc.
 public class GameSettings {
     private String whitePlayerName;
     private String blackPlayerName;
@@ -10,7 +9,7 @@ public class GameSettings {
     private boolean isHost;
     
     public GameSettings() {
-        // Default settings
+        // Default values
         whitePlayerName = "White Player";
         blackPlayerName = "Black Player";
         timerEnabled = false;

@@ -1,18 +1,16 @@
 import javax.swing.*;
 
-/**
- * ChessGame - Main entry point for the Simple Chess Game
- */
+// Main class - this is where the program starts
 public class ChessGame {
     public static void main(String[] args) {
-        // Set look and feel to system default
+        // Try to use the system's look and feel so it looks native
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            // Use default look and feel if setting fails
+            // If it doesn't work, just use default
         }
         
-        // Create and show the Main Menu on the Event Dispatch Thread
+        // Start the main menu
         SwingUtilities.invokeLater(() -> {
             new MainMenu();
         });

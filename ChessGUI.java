@@ -1,9 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * ChessGUI - Handles the graphical user interface for the chess game with improved UI
- */
+// Main game window - this handles all the UI stuff for the chess board
 public class ChessGUI extends JFrame {
     private final ChessBoard board;
     private final JButton[][] squares;
@@ -14,7 +12,7 @@ public class ChessGUI extends JFrame {
     private NetworkManager networkManager;
     private final GameSettings settings;
     
-    // Timer components
+    // Timer stuff for timed matches
     private final JLabel whiteTimerLabel;
     private final JLabel blackTimerLabel;
     private final JLabel whiteNameLabel;
@@ -25,11 +23,12 @@ public class ChessGUI extends JFrame {
     private int blackTimeRemaining;
     private boolean gameOver = false;
     
+    // Colors for the board - tried to make it look nice!
     private static final Color LIGHT_SQUARE = new Color(240, 217, 181);
     private static final Color DARK_SQUARE = new Color(181, 136, 99);
-    private static final Color SELECTED_COLOR = new Color(246, 246, 130); // Bright yellow
-    private static final Color POSSIBLE_MOVE_COLOR = new Color(186, 202, 68); // Yellow-green  
-    private static final Color CAPTURE_MOVE_COLOR = new Color(255, 100, 100); // Light red for captures
+    private static final Color SELECTED_COLOR = new Color(246, 246, 130);
+    private static final Color POSSIBLE_MOVE_COLOR = new Color(186, 202, 68);  
+    private static final Color CAPTURE_MOVE_COLOR = new Color(255, 100, 100); // red-ish for captures
     
     public ChessGUI(GameSettings settings, String hostIp) {
         this.settings = settings;
@@ -41,7 +40,7 @@ public class ChessGUI extends JFrame {
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(new Color(50, 50, 50));
         
-        // Initialize timers if enabled
+        // Setup timer if they enabled it
         if (settings.isTimerEnabled()) {
             whiteTimeRemaining = settings.getTimePerPlayerSeconds();
             blackTimeRemaining = settings.getTimePerPlayerSeconds();
@@ -50,7 +49,7 @@ public class ChessGUI extends JFrame {
             blackTimeRemaining = 0;
         }
         
-        // Top panel - Black player info
+        // Black player panel at top
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(new Color(50, 50, 50));
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -67,12 +66,12 @@ public class ChessGUI extends JFrame {
         topPanel.add(blackNameLabel, BorderLayout.WEST);
         topPanel.add(blackTimerLabel, BorderLayout.EAST);
         
-        // Center panel - Chess board
-        JPanel boardPanel = new JPanel(new GridLayout(8, 8, 0, 0)); // No gaps between squares
+        // The actual chess board
+        JPanel boardPanel = new JPanel(new GridLayout(8, 8, 0, 0)); // 0 gaps so squares touch
         boardPanel.setPreferredSize(new Dimension(640, 640));
         boardPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(101, 67, 33), 8), // Dark brown outer border
-            BorderFactory.createLineBorder(new Color(139, 90, 43), 3)  // Medium brown inner border
+            BorderFactory.createLineBorder(new Color(101, 67, 33), 8), // border to make it look like wood
+            BorderFactory.createLineBorder(new Color(139, 90, 43), 3)
         ));
         
         for (int row = 0; row < 8; row++) {
@@ -81,11 +80,11 @@ public class ChessGUI extends JFrame {
                 square.setFont(new Font("Arial Unicode MS", Font.PLAIN, 48));
                 square.setFocusPainted(false);
                 square.setOpaque(true);
-                square.setBorderPainted(false); // Remove button border for cleaner look
+                square.setBorderPainted(false); // no borders so it looks cleaner
                 square.setContentAreaFilled(true);
                 square.setMargin(new Insets(0, 0, 0, 0));
                 
-                // Alternate colors
+                // Make the checkerboard pattern
                 if ((row + col) % 2 == 0) {
                     square.setBackground(LIGHT_SQUARE);
                 } else {
@@ -101,7 +100,7 @@ public class ChessGUI extends JFrame {
             }
         }
         
-        // Bottom panel - White player info
+        // White player panel at bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(50, 50, 50));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -175,10 +174,10 @@ public class ChessGUI extends JFrame {
         if (gameOver) return;
         
         if (selectedRow == -1) {
-            // First click - select a piece
+            // First click - picking up a piece
             char piece = board.getPiece(row, col);
             if (piece != ' ') {
-                // Check if it's the correct player's turn
+                // Make sure they're moving their own piece
                 boolean isWhite = Character.isUpperCase(piece);
                 if ((board.isWhiteTurn() && isWhite) || (!board.isWhiteTurn() && !isWhite)) {
                     selectedRow = row;
@@ -188,7 +187,7 @@ public class ChessGUI extends JFrame {
                 }
             }
         } else {
-            // Second click - try to move
+            // Second click - putting piece down
             if (row == selectedRow && col == selectedCol) {
                 // Clicked same square - deselect
                 clearSelection();
@@ -215,11 +214,11 @@ public class ChessGUI extends JFrame {
     private void highlightSelected(int row, int col) {
         selectedSquare.setBackground(SELECTED_COLOR);
         
-        // Highlight all possible moves for the selected piece
+        // Show all the places this piece can move
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 if (board.isValidMoveCheck(row, col, r, c)) {
-                    // Check if it's a capture
+                    // Different color if it's a capture move
                     boolean isCapture = board.getPiece(r, c) != ' ';
                     Color originalColor = (r + c) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE;
                     Color highlightColor = isCapture ? CAPTURE_MOVE_COLOR : POSSIBLE_MOVE_COLOR;
@@ -229,8 +228,8 @@ public class ChessGUI extends JFrame {
         }
     }
     
+    // Mix two colors together for the highlighting effect
     private Color blendColors(Color base, Color overlay) {
-        // Use strong blending - 50% base, 50% overlay for better visibility
         int r = (int)(base.getRed() * 0.5 + overlay.getRed() * 0.5);
         int g = (int)(base.getGreen() * 0.5 + overlay.getGreen() * 0.5);
         int b = (int)(base.getBlue() * 0.5 + overlay.getBlue() * 0.5);

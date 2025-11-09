@@ -1,9 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * MainMenu - Welcome screen for the chess game with settings and game mode selection
- */
+// Main menu screen - where you set up the game before playing
 public class MainMenu extends JFrame {
     private GameSettings settings;
     
@@ -15,7 +13,7 @@ public class MainMenu extends JFrame {
         setLayout(new BorderLayout());
         setSize(500, 600);
         
-        // Title Panel
+        // Big title at the top
         JPanel titlePanel = new JPanel();
         titlePanel.setBackground(new Color(40, 40, 40));
         JLabel titleLabel = new JLabel("♔ CHESS GAME ♚");
@@ -23,7 +21,7 @@ public class MainMenu extends JFrame {
         titleLabel.setForeground(Color.WHITE);
         titlePanel.add(titleLabel);
         
-        // Main content panel
+        // All the settings and buttons go here
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
