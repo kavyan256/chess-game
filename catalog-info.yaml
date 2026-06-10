@@ -7,7 +7,8 @@ metadata:
     backstage.io/techdocs-ref: dir:.
   tags:
     - java
-    - Swing / AWT
+    - swing
+    - awt
 spec:
   type: library
   lifecycle: deprecated
