@@ -1,0 +1,5 @@
+site_name: Chess Game
+site_description: A simple chess game implementation in Java using Swing for the GUI, demonstrating Object-Oriented Programming principles.
+docs_dir: docs
+plugins:
+  - techdocs-core
