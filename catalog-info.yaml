@@ -1,7 +1,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: Chess Game
+  name: chess-game
   description: A simple chess game implementation in Java using Swing for the GUI, demonstrating Object-Oriented Programming principles.
   annotations:
     backstage.io/techdocs-ref: dir:.
