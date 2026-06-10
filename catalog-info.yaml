@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: Chess Game
+  description: A simple chess game implementation in Java using Swing for the GUI, demonstrating Object-Oriented Programming principles.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - java
+    - Swing / AWT
+spec:
+  type: library
+  lifecycle: deprecated
+  owner: user:kavyan256
